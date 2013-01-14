@@ -1,0 +1,25 @@
+NPBS
+====
+
+Non-parametric Bootstrapping Code
+
+BEFORE USING THIS CODE:
+
+--> Need fasta file of the transcriptome being mapped to
+
+-->Transcripts need to be named numerically:
+    - i.e. TRANSCRIPT_PREFIX_1, TRANSCRIPT_PREFIX_2, TRANSCRIPT_PREFIX_3, .... 
+
+-->Map raw reads to transcriptome (We used bowtie2)
+
+-->Need a separate file that has just the Sam header from the mapping program
+    - ex. Gene_ID_list.txt
+
+Pipeline:
+
+- run the Preprocess_Map_file.py script on all of you mapping files. 
+- run NPBS.cpp on all of the output files from the previous python script: should get 10 bootstrap files per text file
+- run Significant_tests.py on any two libraries you wish to compare
+
+FYI, all of these scripts require some editing depending depending on the TRANSCRIPT_PREFIX you chose,
+the names of the input and output files used for the mapping program and in previous scripts.
