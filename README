@@ -9,6 +9,7 @@ BEFORE USING THIS CODE:
 
 -->Transcripts need to be named numerically:
     - i.e. TRANSCRIPT_PREFIX_1, TRANSCRIPT_PREFIX_2, TRANSCRIPT_PREFIX_3, .... 
+    - use Format_Assembly.py script to do this
 
 -->Map raw reads to transcriptome (We used bowtie2)
 
@@ -17,9 +18,11 @@ BEFORE USING THIS CODE:
 
 Pipeline:
 
+- run Format_Assembly.py on your assembly.
+- use bowtie2 with your reformatted assembly to get .sam file 
 - run the Preprocess_Map_file.py script on all of you mapping files. 
 - run NPBS.cpp on all of the output files from the previous python script: should get 10 bootstrap files per text file
 - run Significant_tests.py on any two libraries you wish to compare
 
-FYI, all of these scripts require some editing depending depending on the TRANSCRIPT_PREFIX you chose,
+FYI, all of these scripts require some editing depending on the TRANSCRIPT_PREFIX you chose and
 the names of the input and output files used for the mapping program and in previous scripts.
