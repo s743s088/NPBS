@@ -1,31 +1,32 @@
-## Differential gene expression non-parametric bootstrap program
+## This code will look through BS files and assess significance
+## using both the average log2 fold change in expression value 
+## from the BS files and the confidence intervals they create. 
 
 ## Import Libraries ##
 import gc
 import os
-
+from math import log as log
+from numpy import mean as mn
 
 ## Define Functions ##
 
 def get_Counts():
-  
-## OUTFILES IN CMD1 AND CMD3 SHOULD OBVIOUSLY BE FROM DIFFERENT LIBRARIES TO WISH TO COMPARE
 	
-	cmd1 = os.popen('wc -l OUTPUT_FILE_FROM_Preprocess_Map_files.txt').readline().split(' ')
-	numRR_1 = float(cmd1[1])
+	cmd1 = os.popen('wc -l OUTPUT_FROM_Preprocess_Map_file.py_FOR_FIRST_SAMPLE').readline().split(' ')
+	numRR_Sample1 = float(cmd1)
 	
-	cmd2 = os.popen('wc -l SAM_HEADER_FILE.txt').readline().split(' ')
-	numGenes = int(cmd2[3])
+	cmd2 = os.popen('wc -l FILE_THAT_CONTAINS_ONLY_SAM_HEADER').readline().split(' ')
+	numGenes = int(cmd2)
 	
-	cmd3 = os.popen('wc -l OUTPUT_FILE_FROM_Preprocess_Map_files.txt').readline().split(' ')
-	numRR_2 = float(cmd3[1])
+	cmd3 = os.popen('wc -l OUTPUT_FROM_Preprocess_Map_file.py_FOR_SECOND_SAMPLE').readline().split(' ')
+	numRR_Sample2 = float(cmd3)
 	
-	return numRR_1, numGenes, numRR_2
+	return numRR_Sample1, numGenes, numRR_Sample2
 	
 
 def normalization():
 	
-	f = open('SAM_Header_FILE.txt','r')
+	f = open('FILE_THAT_CONTAINS_ONLY_SAM_HEADER','r')
 	
 	GeneLengths = []
 	
@@ -39,14 +40,14 @@ def normalization():
 
 def init_Gene_Count_list(sim):
 	
-	2_BS_Counts = [0]*numGenes
+	Sample2_BS_Counts = [0]*numGenes
 	
-	for i in xrange(len(2_BS_Counts)):
-		2_BS_Counts[i] = []
+	for i in xrange(len(Sample2_BS_Counts)):
+		Sample2_BS_Counts[i] = []
 	
 	gc.disable()
 	
-	BSfile = open('BOOTSTRAP_FILES_CORRESPONDING_TO_CMD3%g.csv' % sim, 'r')
+	BSfile = open('Sample2_BS_FILE_PREFIX%g.csv' % sim, 'r')
 	
 	L1 = []
 	
@@ -56,17 +57,17 @@ def init_Gene_Count_list(sim):
 		
 		for i in xrange(len(L1)-1):
 			
-			2_BS_Counts[idx].append(int(L1[i])/numRR_2/GeneLengths[idx])
+			Sample2_BS_Counts[idx].append(int(L1[i])/numRR_Sample2/GeneLengths[idx])
 		
 	
-	1_BS_Counts = [0]*numGenes
+	Sample1_BS_Counts = [0]*numGenes
 	
-	for i in xrange(len(1_BS_Counts)):
-		1_BS_Counts[i] = []
+	for i in xrange(len(Sample1_BS_Counts)):
+		Sample1_BS_Counts[i] = []
 	
 	gc.disable()
 	
-	BSfile = open('BOOTSTRAP_FILES_CORRESPONDING_TO_CMD1%g.csv' % sim, 'r')
+	BSfile = open('Sample1_BS_FILE_PREFIX%g.csv' % sim, 'r')
 	
 	L2 = []
 	
@@ -76,128 +77,82 @@ def init_Gene_Count_list(sim):
 		
 		for i in xrange(len(L2)-1):
 			
-			1_BS_Counts[idx].append(int(L2[i])/numRR_1/GeneLengths[idx])
+			Sample1_BS_Counts[idx].append(int(L2[i])/numRR_Sample1/GeneLengths[idx])
 	
 	gc.enable()
 	
-	return 2_BS_Counts, 1_BS_Counts
+	return Sample2_BS_Counts, Sample1_BS_Counts
 
-def init_sig_gene_storage():
+def Get_Log_Change():##THIS SECTION WILL REQUIRE SOME EDITING DEPENDING ON HOW MANY SAMPLE TYPES YOU HAVE IN THE 'all_counts.csv' file
+	f = open('all_counts.csv','r')
 	
-	UP = [0]*numSIM
-	DOWN = [0]*numSIM
-	NS = [0]*numSIM
+	log_FOLD_change=[]
 	
-	for i in xrange(numSIM):
-		UP[i] = []
-		DOWN[i] = []
-		NS[i] = []
+	for idx, row in enumerate(f):
+		
+		if idx > 0:
+			
+			index = [int(row.split(',')[0].split('_')[-1])-1,0,0,0]
+			
+			Sample1 = float(row.split(',')[5])
+			Sample2 = float(row.split(',')[7])
+			
+			if Sample1 != 0.0 and Sample2 != 0.0:
+				if abs(log(Sample1/Sample2,2)) >=foldChange:
+					log_FOLD_change.append(index)
 	
-	return UP, DOWN, NS
+	return log_FOLD_change
 
 def sig_test_function(sim):
 	
 	gc.disable()
 	
-	print 'Testing for significant differential expression between 2zooid and gonozooid of each gene in simulation %g of %g.' % (sim+1, numSIM)
+	print 'Testing for significant differential expression of each transcript between samples in simulation %g of %g.' % (sim+1, numSIM)
 	
-	for i in xrange(numGenes):
-		2_BS_Counts[i].sort()
+	for i in xrange(len(log_FOLD_change)):
+		Sample2_BS_Counts[log_FOLD_change[i][0]].sort()
 		
-		highCrit1 = 2_BS_Counts[i][int(numBS*.975)]
-		lowCrit1 = 2_BS_Counts[i][int(numBS*.025)]
+		highCrit1 = Sample2_BS_Counts[log_FOLD_change[i][0]][-1]
+		lowCrit1 = Sample2_BS_Counts[log_FOLD_change[i][0]][0]
+		average1 = mn(Sample2_BS_Counts[log_FOLD_change[i][0]])
 		
-		1_BS_Counts[i].sort()
+		Sample1_BS_Counts[log_FOLD_change[i][0]].sort()
 		
-		highCrit2 = 1_BS_Counts[i][int(numBS*.975)]
-		lowCrit2 = 1_BS_Counts[i][int(numBS*.025)]
+		highCrit2 = Sample1_BS_Counts[log_FOLD_change[i][0]][-1]
+		lowCrit2 = Sample1_BS_Counts[log_FOLD_change[i][0]][0]
+		average2 = mn(Sample1_BS_Counts[log_FOLD_change[i][0]])
 		
-		if lowCrit2 > highCrit1:
+		if (lowCrit2 > highCrit1) and highCrit1 != 0.0:
 			
-			UP[sim].append(i+1)
+			if log(average2/average1,2) >= foldChange:
+				log_FOLD_change[i][1]+=1
+			else:
+				log_FOLD_change[i][3]+=1
+		
+		elif (highCrit2 < lowCrit1) and highCrit2 != 0.0:
 			
-		elif highCrit2 < lowCrit1:
-			
-			DOWN[sim].append(i+1)
-			
+			if log(average2/average1,2) <= -foldChange:
+				log_FOLD_change[i][2]+=1
+			else:
+				log_FOLD_change[i][3]+=1
 		else:
-			
-			NS[sim].append(i+1)
+				log_FOLD_change[i][3]+=1
 	
 	gc.enable()
 	
 	return 
 
-def sum_over_all_sim():
-	
-	gc.disable()
-	
-	print 'Summarizing differentially expressed genes over all simulation runs.'
-	
-	upCOUNT = []
-	downCOUNT = []
-	nsCOUNT = []
-	
-	upTOT = []
-	downTOT = []
-	nsTOT = []
-	
-	for i in xrange(3):
-		
-		if i == 0:
-			list1 = UP
-			list2 = upTOT
-			list3 = upCOUNT
-		elif i == 1:
-			list1 = DOWN
-			list2 = downTOT
-			list3 = downCOUNT
-		else:
-			list1 = NS
-			list2 = nsTOT
-			list3 = nsCOUNT
-		
-		for j in xrange(len(list1)):
-			
-			for k in xrange(len(list1[j])):
-				
-				list2.append(list1[j][k])
-		
-		list2.sort()
-		
-		a = 0
-		c = 0
-		
-		for m in xrange(len(list2)):
-			
-			if list2[m] != list2[m-1]:
-				list3.append([0,list2[m]])
-				while a < len(list2):
-					if list2[m] == list2[a]:
-						
-						a += 1
-						list3[c][0] += 1
-						
-					else:
-						c +=1
-						
-						break
-	
-	gc.enable()
-	
-	return upCOUNT, downCOUNT, nsCOUNT
-
 def make_output_files():
 	
-	rawfile = open('TRANSCRIPTOME_FASTA_FILE', 'r')
+	rawfile = open('OUT_ASSEMBLY_FILE_PREFIX_FROM_Format_Assembly.py_.fasta', 'r')
 	
-	edfile = open('TRANSCRIPTOME_FASTA_FILE_EDITED', 'w')
+	edfile = open('OUT_ASSEMBLY_FILE_FROM_REFIX_Format_Assembly.py_ed.fasta', 'w')
 	
 	for idx, row in enumerate(rawfile, start=1):
 		g = row.replace('\n', ',')
 		edfile.write(g)
 	
-	edfile = open('TRANSCRIPTOME_FASTA_FILE_EDITED', 'r')
+	edfile = open('OUT_ASSEMBLY_FILE_FROM_REFIX_Format_Assembly.py_ed.fasta', 'r')
 	x = 0
 	
 	for idx, row in enumerate(edfile, start=1):
@@ -206,57 +161,40 @@ def make_output_files():
 	
 	print 'Creating files with list of differentially expressed genes.'
 	
-	for k in xrange(3):
+	f = open('RESULTS.csv', 'w')
+
+	f.write('Gene ID, #UP, #DOWN, #NS, Gene Seq., \n')
+	
+	for i in xrange(len(log_FOLD_change)):
 		
-		if k == 0:
-			f = open('UP_regulated_gene.csv', 'w')
-			x = upCOUNT
-		elif k == 1:
-			f = open('DOWN_regulated_gene.csv', 'w')
-			x = downCOUNT
-		else:
-			f = open('NS_regulated_gene.csv', 'w')
-			x = nsCOUNT
+		f.write('NEW_ID_PREFIX_FROM_Format_Assembly.py_FILE_%g, %g, %g, %g, %s, \n' % (log_FOLD_change[i][0]+1, log_FOLD_change[i][1], log_FOLD_change[i][2], log_FOLD_change[i][3], g[((log_FOLD_change[i][0])*2)+1]))
 		
-		f.write('# sig, Gene ID, Gene Seq., \n')
-		
-		for i in xrange(len(x)):
-			
-			f.write('%g, TRANSCRIPT_PREFIX_%g, %s, \n' % (x[i][0], x[i][1], g[((x[i][1]-1)*2)+1]))
-			
-		f.flush()
-		f.close()
+	f.flush()
+	f.close()
 	
 	return
 
 def make_fasta_files():
 	#Creates fasta files of genes found significant in a specified number of runs
-	#These files can be the input into an1 program that runs a blast search on all the genes
+	#These files can be the input into another program that runs a blast search on all the genes
 	
 	print 'Creating .fasta files of genes found significantly up and down regulated in %g of %g independent runs.' % (minSig, numSIM)
 	
-	for k in xrange(3):
+	f = open('RESULTS.csv', 'r')
+	
+	g = open('UP_reg_RESULTS.fasta', 'w')
+	
+	h = open('DOWN_reg_RESULTS.fasta', 'w')
 		
-		if k == 0:
-			f = open('UP_regulated_gene.csv', 'r')
-			g = open('UP_reg.fasta', 'w')
-		elif k == 1:
-			f = open('DOWN_regulated_gene.csv', 'r')
-			g = open('DOWN_reg.fasta', 'w')
-		else:
-			f = open('NS_regulated_gene.csv', 'r')
-			g = open('NS_reg.fasta', 'w')
+	for idx, row in enumerate(f):
 		
-		for idx, row in enumerate(f):
-			
-			l = row.replace(' ', '').replace('\n',',').split(',')
-			
-			if idx>0:
-				if k <= 1:
-					if int(l[0]) >= minSig:
-						g.write('>%s\n%s\n' % (l[1], l[2]))
-				else:
-					g.write('>%s\n%s\n' % (l[1], l[2]))
+		l = row.replace(' ', '').replace('\n',',').split(',')
+		
+		if idx>0:
+			if int(l[1]) >= minSig:
+				g.write('>%s\n%s\n' % (l[0], l[4]))
+			elif int(l[2]) >= minSig:
+				h.write('>%s\n%s\n' % (l[0], l[4]))
 	
 	f.close()
 	g.close()
@@ -268,20 +206,19 @@ def make_fasta_files():
 numSIM = 10
 minSig = 10 #Number of times a gene must be significant in all simulations to be reported in the fasta files
 numBS = 100
+foldChange = 2.0
 
-(numRR_1, numGenes, numRR_2) = get_Counts()
+(numRR_Sample1, numGenes, numRR_Sample2) = get_Counts()
 
 GeneLengths = normalization()
 
-(UP, DOWN, NS) = init_sig_gene_storage()
+log_FOLD_change = Get_Log_Change()
 
 for sim in xrange(numSIM):
 	
-	(2_BS_Counts, 1_BS_Counts) = init_Gene_Count_list(sim)
+	(Sample2_BS_Counts, Sample1_BS_Counts) = init_Gene_Count_list(sim)
 	
 	sig_test_function(sim)
-
-(upCOUNT, downCOUNT, nsCOUNT) = sum_over_all_sim()
 
 make_output_files()
 
