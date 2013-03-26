@@ -14,7 +14,7 @@ BEFORE USING THIS CODE:
 -->Map raw reads to reformatted transcriptome (We used bowtie2)
 
 -->Need csv file that summarizes expression values:
-    -ex: contig,length,Da,Go,Ga,Da normalized,Go normalized,Ga normalized
+    -ex: contig,length,Sample1,Sample2,Sample3,Sample1 normalized,Sample2 normalized,Sample3 normalized
          hyd_paired_contig_1,1102,1553,6374,2758,1.13723836424e-08,3.40819185565e-08,2.20808211639e-08
          hyd_paired_contig_10,274,17,6908,42544,5.00679718456e-10,1.48557757744e-07,1.36990455644e-06
          hyd_paired_contig_100,344,173,16225,20364,4.05834815565e-09,2.77920020147e-07,5.22284573929e-07
