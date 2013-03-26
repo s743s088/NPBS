@@ -84,7 +84,7 @@ def init_Gene_Count_list(sim):
 	return Sample2_BS_Counts, Sample1_BS_Counts
 
 def Get_Log_Change():##THIS SECTION WILL REQUIRE SOME EDITING DEPENDING ON HOW MANY SAMPLE TYPES YOU HAVE IN THE 'all_counts.csv' file
-	f = open('all_counts.csv','r')
+	f = open('csv_SUMMARY_FILE','r')
 	
 	log_FOLD_change=[]
 	
