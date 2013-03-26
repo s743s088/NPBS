@@ -11,10 +11,22 @@ BEFORE USING THIS CODE:
     - i.e. TRANSCRIPT_PREFIX_1, TRANSCRIPT_PREFIX_2, TRANSCRIPT_PREFIX_3, .... 
     - use Format_Assembly.py script to do this
 
--->Map raw reads to transcriptome (We used bowtie2)
+-->Map raw reads to reformatted transcriptome (We used bowtie2)
+
+-->Need csv file that summarizes expression values:
+    -ex: contig,length,Da,Go,Ga,Da normalized,Go normalized,Ga normalized
+         hyd_paired_contig_1,1102,1553,6374,2758,1.13723836424e-08,3.40819185565e-08,2.20808211639e-08
+         hyd_paired_contig_10,274,17,6908,42544,5.00679718456e-10,1.48557757744e-07,1.36990455644e-06
+         hyd_paired_contig_100,344,173,16225,20364,4.05834815565e-09,2.77920020147e-07,5.22284573929e-07
+         etc...
 
 -->Need a separate file that has just the Sam header from the mapping program
-    - ex. Gene_ID_list.txt
+    - ex: @SQ    SN:hyd_paired_contig_1	LN:1102
+          @SQ	 SN:hyd_paired_contig_2	LN:1762
+          @SQ  	 SN:hyd_paired_contig_3	LN:1457
+          @SQ	 SN:hyd_paired_contig_4	LN:2262
+          @SQ	 SN:hyd_paired_contig_5	LN:264
+          etc...
 
 Pipeline:
 
